@@ -7,14 +7,12 @@
 static const char *TAG = "FACTORY";
 
 bool factory_check_entry(void) {
+    // GPIO already configured in app_main, just read
     return (gpio_get_level(GPIO_BOOT_BTN) == 0);
 }
 
 void factory_mode_run(void) {
-    ESP_LOGW(TAG, "Entering FACTORY RESET mode");
+    ESP_LOGW(TAG, "Factory reset mode");
     security_reset_credentials();
-    // Blink LED, wait for release
-    while(1) {
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
+    while(1) vTaskDelay(pdMS_TO_TICKS(1000));
 }
