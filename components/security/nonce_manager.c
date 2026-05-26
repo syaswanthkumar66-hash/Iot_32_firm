@@ -7,6 +7,9 @@ static const char *TAG = "NONCE";
 static nvs_handle_t nvs_handle;
 static uint32_t boot_counter = 0;
 static uint32_t packet_counter = 0;
+static uint32_t unsaved_count = 0;          // <-- NEW
+
+#define NVS_COMMIT_INTERVAL  100           // <-- NEW: commit every 100 increments
 
 esp_err_t nonce_manager_init(void)
 {
@@ -33,7 +36,12 @@ esp_err_t nonce_manager_get_counter(uint32_t *counter)
 esp_err_t nonce_manager_increment_counter(void)
 {
     packet_counter++;
-    nvs_set_u32(nvs_handle, "pkt_ctr", packet_counter);
-    nvs_commit(nvs_handle);
+    unsaved_count++;
+
+    if (unsaved_count >= NVS_COMMIT_INTERVAL) {
+        nvs_set_u32(nvs_handle, "pkt_ctr", packet_counter);
+        nvs_commit(nvs_handle);
+        unsaved_count = 0;
+    }
     return ESP_OK;
 }
