@@ -1,29 +1,43 @@
 #include "packet_validator.h"
 #include "esp_timer.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "security.h"
+#include "session_manager.h"
+#include <string.h>
 
 static uint32_t last_second = 0;
 static uint32_t packet_count = 0;
 #define MAX_PACKETS_PER_SEC 30
 
+static SemaphoreHandle_t rate_limit_mutex = NULL;
+
 bool packet_validator_check_rate_limit(void)
 {
+    if (!rate_limit_mutex) {
+        rate_limit_mutex = xSemaphoreCreateMutex();
+    }
+    xSemaphoreTake(rate_limit_mutex, portMAX_DELAY);
+
     uint32_t now = esp_timer_get_time() / 1000000;
     if (now != last_second) {
         last_second = now;
         packet_count = 0;
-        return false; // ok
+        xSemaphoreGive(rate_limit_mutex);
+        return false;
     }
     packet_count++;
-    return packet_count > MAX_PACKETS_PER_SEC;
+    bool exceeded = (packet_count > MAX_PACKETS_PER_SEC);
+    xSemaphoreGive(rate_limit_mutex);
+    return exceeded;
 }
 
 int packet_process(const uint8_t *data, size_t len, session_t *session, uint8_t *plain_out)
 {
-    // Full implementation: extract fields, verify version, decrypt, check counter, parse opcode
-    // For brevity, we include essential logic:
-    if (len < 1 + 4 + 4 + 12 + 16) return -1; // minimal
+    // Minimal packet: VERSION(1) + SESSION_ID(4) + COUNTER(4) + NONCE(12) + AUTH_TAG(16)
+    if (len < 1 + 4 + 4 + 12 + 16) return -1;
+
     const uint8_t *session_id_ptr = data + 1;
     const uint8_t *counter_ptr = data + 5;
     const uint8_t *nonce_ptr = data + 9;
@@ -33,7 +47,6 @@ int packet_process(const uint8_t *data, size_t len, session_t *session, uint8_t 
 
     uint32_t counter;
     memcpy(&counter, counter_ptr, 4);
-    // Replay check: sliding window (simplified)
     if (counter <= session->last_counter) {
         ESP_LOGW("PKT", "Replay packet");
         return -1;
@@ -43,7 +56,7 @@ int packet_process(const uint8_t *data, size_t len, session_t *session, uint8_t 
     uint8_t decrypted[256];
     int ret = aes_gcm_decrypt(session->session_key, SESSION_KEY_LEN,
                               nonce_ptr, 12,
-                              NULL, 0,  // no AAD
+                              NULL, 0,
                               payload_enc, payload_len,
                               tag, decrypted);
     if (ret != 0) {
@@ -51,7 +64,6 @@ int packet_process(const uint8_t *data, size_t len, session_t *session, uint8_t 
         return -1;
     }
     memcpy(plain_out, decrypted, payload_len);
-    // Dispatch opcode (first byte of plain_out is opcode)
-    opcode_dispatch(plain_out[0], plain_out + 1, payload_len - 1);
+    opcode_dispatch(decrypted[0], decrypted + 1, payload_len - 1);
     return payload_len;
 }
