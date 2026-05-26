@@ -17,7 +17,6 @@ esp_err_t nonce_manager_init(void)
     }
     nvs_get_u32(nvs_handle, "boot_ctr", &boot_counter);
     nvs_get_u32(nvs_handle, "pkt_ctr", &packet_counter);
-    // Increment boot counter on each boot
     boot_counter++;
     nvs_set_u32(nvs_handle, "boot_ctr", boot_counter);
     nvs_commit(nvs_handle);
