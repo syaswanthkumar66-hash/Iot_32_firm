@@ -2,6 +2,9 @@
 #include "lwip/sockets.h"
 #include "lwip/netdb.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "esp_task_wdt.h"
 #include "session_manager.h"
 #include "packet_validator.h"
 #include "opcode_handler.h"
@@ -49,6 +52,8 @@ void udp_realtime_task(void)
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(client_addr);
 
+    esp_task_wdt_add(NULL); // Add to watchdog
+
     while (1) {
         int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer), 0,
                            (struct sockaddr *)&client_addr, &addr_len);
@@ -61,32 +66,28 @@ void udp_realtime_task(void)
             continue;
         }
 
-        // Packet processing inline (for latency) but with rate limit check
         if (packet_validator_check_rate_limit()) {
             ESP_LOGW(TAG, "Rate limit exceeded");
             continue;
         }
 
-        // Extract session_id from packet (first 4 bytes after version)
         if (len < 5) continue;
         uint32_t session_id;
         memcpy(&session_id, rx_buffer + 1, 4);
 
-        // Find session
         session_t *session = session_find(session_id);
         if (!session) {
             ESP_LOGW(TAG, "Unknown session ID 0x%08lx", session_id);
             continue;
         }
 
-        // Decrypt and process
-        uint8_t plain[256 - 1 - 4 - 4 - 12 - 16]; // approximate
-        // ... full decryption and opcode handling
-        // See packet_validator and opcode_handler
+        uint8_t plain[256 - 1 - 4 - 4 - 12 - 16];
         int result = packet_process(rx_buffer, len, session, plain);
         if (result < 0) {
             ESP_LOGE(TAG, "Packet processing failed");
             continue;
         }
+
+        esp_task_wdt_reset(); // Feed watchdog
     }
 }
