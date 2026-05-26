@@ -4,10 +4,13 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "esp_log.h"
+#include <string.h>
 
 static const char *TAG = "RELAY";
-static const uint8_t relay_pins[RELAY_COUNT] = { GPIO_RELAY_1, GPIO_RELAY_2, GPIO_RELAY_3, GPIO_RELAY_4 };
-bool relay_state[RELAY_COUNT];
+static const uint8_t relay_pins[RELAY_COUNT] = {
+    GPIO_RELAY_1, GPIO_RELAY_2, GPIO_RELAY_3, GPIO_RELAY_4
+};
+static bool relay_state[RELAY_COUNT];               // <-- static now
 static SemaphoreHandle_t relay_mutex = NULL;
 
 void relay_control_init(void)
@@ -48,5 +51,24 @@ void relay_apply_state(void)
     for (int i = 0; i < RELAY_COUNT; i++) {
         gpio_set_level(relay_pins[i], relay_state[i] ? 0 : 1);
     }
+    xSemaphoreGive(relay_mutex);
+}
+
+void relay_state_set_all(const bool *states)
+{
+    if (!relay_mutex || !states) return;
+    xSemaphoreTake(relay_mutex, portMAX_DELAY);
+    memcpy(relay_state, states, sizeof(relay_state));
+    for (int i = 0; i < RELAY_COUNT; i++) {
+        gpio_set_level(relay_pins[i], relay_state[i] ? 0 : 1);
+    }
+    xSemaphoreGive(relay_mutex);
+}
+
+void relay_state_get_all(bool *states_out)
+{
+    if (!relay_mutex || !states_out) return;
+    xSemaphoreTake(relay_mutex, portMAX_DELAY);
+    memcpy(states_out, relay_state, sizeof(relay_state));
     xSemaphoreGive(relay_mutex);
 }
