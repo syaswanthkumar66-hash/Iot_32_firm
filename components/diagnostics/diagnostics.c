@@ -1,4 +1,3 @@
-// components/diagnostics/diagnostics.c
 #include "diagnostics.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
