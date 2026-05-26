@@ -5,7 +5,8 @@
 static const uint8_t relay_pins[RELAY_COUNT] = {
     GPIO_RELAY_1, GPIO_RELAY_2, GPIO_RELAY_3, GPIO_RELAY_4
 };
-static bool relay_state[RELAY_COUNT];
+// Exposed for relay_state.c
+bool relay_state[RELAY_COUNT];
 
 void relay_control_init(void)
 {
