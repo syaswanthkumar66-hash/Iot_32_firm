@@ -1,14 +1,21 @@
 menu "IoTyk Relay Firmware Configuration"
 
+    config IOTYK_TESTING_MODE
+        bool "Enable Testing Mode (serial debug, export credentials)"
+        default y
+        help
+            When enabled, serial commands and credential export are available.
+            Disable for production.
+
     config IOTYK_WIFI_SSID
         string "WiFi SSID"
-        default "MyWiFi"
+        default ""
         help
             WiFi network name.
 
     config IOTYK_WIFI_PASSWORD
         string "WiFi Password"
-        default "password123"
+        default ""
         help
             WiFi password.
 
@@ -17,5 +24,11 @@ menu "IoTyk Relay Firmware Configuration"
         default "mqtts://test.mosquitto.org"
         help
             MQTT broker address with protocol.
+
+    config IOTYK_OTA_FIRMWARE_URL
+        string "OTA Firmware URL"
+        default "https://example.com/iotyk_fw.bin"
+        help
+            URL for OTA firmware download.
 
 endmenu
