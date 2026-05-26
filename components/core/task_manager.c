@@ -1,8 +1,3 @@
-/**
- * @file task_manager.c
- * @brief FreeRTOS task creation and management
- */
-
 #include "task_manager.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -43,27 +38,8 @@ void task_manager_create_tasks(void)
     ESP_LOGI(TAG, "All tasks created.");
 }
 
-static void wifi_task(void *pvParameters)
-{
-    wifi_manager_task();
-}
-
-static void udp_task(void *pvParameters)
-{
-    udp_realtime_task();
-}
-
-static void mqtt_task(void *pvParameters)
-{
-    mqtt_client_task();
-}
-
-static void telemetry_task(void *pvParameters)
-{
-    telemetry_task_run();
-}
-
-static void diagnostic_task(void *pvParameters)
-{
-    diagnostics_task();
-}
+static void wifi_task(void *pvParameters) { wifi_manager_task(); }
+static void udp_task(void *pvParameters) { udp_realtime_task(); }
+static void mqtt_task(void *pvParameters) { mqtt_client_task(); }
+static void telemetry_task(void *pvParameters) { telemetry_task_run(); }
+static void diagnostic_task(void *pvParameters) { diagnostics_task(); }
