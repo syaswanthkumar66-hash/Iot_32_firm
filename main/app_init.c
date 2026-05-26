@@ -8,8 +8,8 @@
 #include "ota_manager.h"
 #include "mqtt_client.h"
 #include "udp_realtime.h"
-#include "event_bus.h"
 #include "packet_validator.h"
+// event_bus.h no longer needed here
 
 static const char *TAG = "APP_INIT";
 
@@ -17,8 +17,8 @@ void app_init(void)
 {
     ESP_LOGI(TAG, "Initializing application components...");
 
-    // Event bus for inter-component communication
-    event_bus_init();
+    // Event bus already initialised in main.c – do NOT call again.
+    // event_bus_init() removed from here.
 
     // Storage (load saved states)
     storage_init();
