@@ -1,0 +1,21 @@
+menu "IoTyk Relay Firmware Configuration"
+
+    config IOTYK_WIFI_SSID
+        string "WiFi SSID"
+        default "MyWiFi"
+        help
+            WiFi network name.
+
+    config IOTYK_WIFI_PASSWORD
+        string "WiFi Password"
+        default "password123"
+        help
+            WiFi password.
+
+    config IOTYK_MQTT_BROKER_URI
+        string "MQTT Broker URI"
+        default "mqtts://test.mosquitto.org"
+        help
+            MQTT broker address with protocol.
+
+endmenu
