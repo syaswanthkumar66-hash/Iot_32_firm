@@ -20,3 +20,12 @@
 #define WIFI_CONNECT_TIMEOUT_MS   15000
 #define TELEMETRY_PERIOD_MS       10000
 #define WATCHDOG_TIMEOUT_SEC      5
+#define MAX_ENCRYPTED_PACKET  256
+#define MAX_PLAIN_PAYLOAD     128
+
+uint8_t plain[MAX_PLAIN_PAYLOAD];
+if (len < (1+4+4+12+16) || (len - (1+4+4+12+16)) > MAX_PLAIN_PAYLOAD) {
+    ESP_LOGW(TAG, "Invalid packet size %d", len);
+    continue;
+}
+int result = packet_process(rx_buffer, len, session, plain);
