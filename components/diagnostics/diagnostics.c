@@ -4,7 +4,6 @@
 #include "freertos/task.h"
 
 static const char *TAG = "DIAG";
-
 void diagnostics_task(void) {
     while(1) {
         ESP_LOGI(TAG, "Watermark: %d", uxTaskGetStackHighWaterMark(NULL));
