@@ -38,16 +38,16 @@ int packet_process(const uint8_t *data, size_t len, session_t *session,
                    uint8_t *plain_out, size_t plain_out_max)
 {
     if (len < 1 + 4 + 4 + 12 + 16) return -1;
-    size_t payload_len = len - (1+4+4+12+16);
+    size_t payload_len = len - (1 + 4 + 4 + 12 + 16);
     if (payload_len > plain_out_max) {
         ESP_LOGE("PKT", "Plain buffer too small");
         return -1;
     }
 
     const uint8_t *counter_ptr = data + 5;
-    const uint8_t *nonce_ptr = data + 9;
+    const uint8_t *nonce_ptr   = data + 9;
     const uint8_t *payload_enc = data + 21;
-    const uint8_t *tag = data + len - 16;
+    const uint8_t *tag         = data + len - 16;
 
     uint32_t counter;
     memcpy(&counter, counter_ptr, 4);
@@ -67,10 +67,12 @@ int packet_process(const uint8_t *data, size_t len, session_t *session,
     }
     memcpy(plain_out, decrypted, payload_len);
 
-    // Increment global nonce counter
     nonce_manager_increment_counter();
 
-    // Dispatch opcode (first byte)
-    opcode_dispatch(decrypted[0], decrypted + 1, payload_len - 1);
+    // Dispatch only if there is at least one byte for the opcode
+    if (payload_len >= 1) {
+        opcode_dispatch(decrypted[0], decrypted + 1, payload_len - 1);
+    }
+
     return (int)payload_len;
 }
