@@ -5,16 +5,14 @@
 #include "security.h"
 
 #define MAX_SESSIONS 5
-
 static session_t sessions[MAX_SESSIONS];
 static int session_count = 0;
 
-session_t *session_find(uint32_t id)
+__attribute__((warn_unused_result)) session_t *session_find(uint32_t id)
 {
-    for (int i = 0; i < MAX_SESSIONS; i++) {
+    for (int i = 0; i < MAX_SESSIONS; i++)
         if (sessions[i].active && sessions[i].session_id == id)
             return &sessions[i];
-    }
     return NULL;
 }
 
@@ -30,17 +28,18 @@ session_t *session_create(uint32_t id, const uint8_t *remote_nonce, size_t nonce
             esp_fill_random(local_nonce, 12);
             memcpy(sessions[i].local_nonce, local_nonce, 12);
 
-            // Correct key derivation: concatenate device_token || remote_nonce || local_nonce
-            uint8_t ikm[DEVICE_TOKEN_LEN + 12 + 12];
+            // Build IKM: device_token || remote_nonce || local_nonce
             const uint8_t *token = security_get_device_token();
-            memcpy(ikm, token, DEVICE_TOKEN_LEN);
-            memcpy(ikm + DEVICE_TOKEN_LEN, remote_nonce, 12);
-            memcpy(ikm + DEVICE_TOKEN_LEN + 12, local_nonce, 12);
+            volatile uint8_t ikm[DEVICE_TOKEN_LEN + 12 + 12];
+            memcpy((void *)ikm, token, DEVICE_TOKEN_LEN);
+            memcpy((void *)(ikm + DEVICE_TOKEN_LEN), remote_nonce, 12);
+            memcpy((void *)(ikm + DEVICE_TOKEN_LEN + 12), local_nonce, 12);
 
             hkdf_sha256_extract_expand(NULL, 0,
-                                       ikm, sizeof(ikm),
-                                       (const uint8_t *)"session_key", 11,
+                                       (const uint8_t *)ikm, sizeof(ikm),
+                                       (const uint8_t *)"session_key_v1", 15,
                                        sessions[i].session_key, SESSION_KEY_LEN);
+            memset((void *)ikm, 0, sizeof(ikm)); // clear volatile to prevent optimization
 
             session_count++;
             ESP_LOGI("SESS", "Created session %08lx", id);
