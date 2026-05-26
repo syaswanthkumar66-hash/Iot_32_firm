@@ -1,4 +1,3 @@
-// components/factory_mode/factory.c
 #include "factory_mode.h"
 #include "esp_log.h"
 #include "driver/gpio.h"
