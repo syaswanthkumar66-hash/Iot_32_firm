@@ -1,4 +1,3 @@
-// security_core.c
 #include "security.h"
 #include "esp_system.h"
 #include "esp_random.h"
@@ -12,6 +11,11 @@
 static const char *TAG = "SEC";
 static uint8_t device_token[DEVICE_TOKEN_LEN];
 static bool initialized = false;
+
+const uint8_t* security_get_device_token(void)
+{
+    return device_token;
+}
 
 esp_err_t security_init_credentials(void)
 {
