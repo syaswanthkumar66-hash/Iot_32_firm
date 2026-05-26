@@ -1,8 +1,3 @@
-/**
- * @file event_bus.c
- * @brief Simple event bus for inter-component communication.
- *        Not heavily used in this testing version, but ready for expansion.
- */
 #include "event_bus.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
