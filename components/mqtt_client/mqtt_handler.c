@@ -6,13 +6,8 @@
 
 static const char *TAG = "MQTT";
 
-void mqtt_client_init(void) {
-    // configuration loaded, client started in task
-}
-
+void mqtt_client_init(void) { /* placeholder */ }
 void mqtt_client_task(void) {
-    ESP_LOGI(TAG, "MQTT task started (testing mode – TLS1.3)");
-    while(1) {
-        vTaskDelay(pdMS_TO_TICKS(10000));
-    }
+    ESP_LOGI(TAG, "MQTT task started (TLS 1.3)");
+    while(1) vTaskDelay(pdMS_TO_TICKS(10000));
 }
