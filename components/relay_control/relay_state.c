@@ -22,9 +22,6 @@ void relay_state_load(void)
     size_t len = sizeof(relay_state);
     nvs_get_blob(handle, "relay_st", relay_state, &len);
     nvs_close(handle);
-
-    // Apply loaded state to GPIOs
-    for (int i = 0; i < RELAY_COUNT; i++) {
-        relay_control_set(i, relay_state[i]);
-    }
+    // Apply to GPIOs without triggering NVS write
+    relay_apply_state();
 }
