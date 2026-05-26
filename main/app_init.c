@@ -1,8 +1,3 @@
-/**
- * @file app_init.c
- * @brief Application initialization helpers
- */
-
 #include "app_init.h"
 #include "esp_log.h"
 #include "security.h"
@@ -13,6 +8,8 @@
 #include "ota_manager.h"
 #include "mqtt_client.h"
 #include "udp_realtime.h"
+#include "event_bus.h"
+#include "packet_validator.h"
 
 static const char *TAG = "APP_INIT";
 
@@ -20,12 +17,18 @@ void app_init(void)
 {
     ESP_LOGI(TAG, "Initializing application components...");
 
+    // Event bus for inter-component communication
+    event_bus_init();
+
     // Storage (load saved states)
     storage_init();
 
-    // Relay driver and state
+    // Relay driver and state (state load does NOT trigger NVS writes)
     relay_control_init();
     relay_state_load();
+
+    // Rate limiter mutex
+    packet_validator_init();
 
     // Automation engine
     automation_init();
