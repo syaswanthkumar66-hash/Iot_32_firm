@@ -35,5 +35,4 @@ CONFIG_ESP_WIFI_PM_ENABLE=n
 CONFIG_MQTT_TRANSPORT_SSL=y
 CONFIG_MQTT_TRANSPORT_WEBSOCKET=n
 
-# cbor
-CONFIG_TINYCBOR=y
+# TinyCBOR is a component, not a config option – removed incorrect line
