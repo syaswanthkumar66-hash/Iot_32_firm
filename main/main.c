@@ -14,6 +14,7 @@
 #include "nvs_flash.h"
 #include "esp_netif.h"
 #include "esp_event.h"
+#include "driver/gpio.h"
 #include "app_init.h"
 #include "app_config.h"
 #include "task_manager.h"
@@ -25,6 +26,7 @@
 #include "ota_manager.h"
 #include "diagnostics.h"
 #include "factory_mode.h"
+#include "event_bus.h"
 
 static const char *TAG = "MAIN";
 
@@ -45,22 +47,29 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    // 3. Check for factory mode (GPIO0 held low at boot)
+    // 3. Configure factory mode GPIO early
+    gpio_reset_pin(GPIO_BOOT_BTN);
+    gpio_set_direction(GPIO_BOOT_BTN, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(GPIO_BOOT_BTN, GPIO_PULLUP_ONLY);
+    vTaskDelay(pdMS_TO_TICKS(10)); // settle
+
+    // 4. Check for factory mode
     if (factory_check_entry()) {
         factory_mode_run();
-        return; // factory mode loops indefinitely
+        return;
     }
 
-    // 4. Load / generate credentials in NVS (testing mode)
+    // 5. Load / generate credentials in NVS (testing mode)
     security_init_credentials();
 
-    // 5. Initialize subsystems
+    // 6. Initialize subsystems (event bus, etc.)
+    ESP_ERROR_CHECK(event_bus_init());
     app_init();
 
-    // 6. Create all FreeRTOS tasks
+    // 7. Create all FreeRTOS tasks
     task_manager_create_tasks();
 
-    // 7. Start WiFi connection
+    // 8. Start WiFi connection
     wifi_manager_start();
 
     ESP_LOGI(TAG, "System initialized successfully. Running tasks...");
