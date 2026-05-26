@@ -2,19 +2,29 @@
 #include "nvs_flash.h"
 #include "nvs.h"
 #include "esp_log.h"
+#include "app_config.h"
 
-static const char *TAG = "RELAY";
+extern bool relay_state[RELAY_COUNT];
 
 void relay_state_save(void)
 {
     nvs_handle_t handle;
     if (nvs_open("storage", NVS_READWRITE, &handle) != ESP_OK) return;
-    // save relay states as blob
+    nvs_set_blob(handle, "relay_st", relay_state, sizeof(relay_state));
     nvs_commit(handle);
     nvs_close(handle);
 }
 
 void relay_state_load(void)
 {
-    // Load from NVS
+    nvs_handle_t handle;
+    if (nvs_open("storage", NVS_READONLY, &handle) != ESP_OK) return;
+    size_t len = sizeof(relay_state);
+    nvs_get_blob(handle, "relay_st", relay_state, &len);
+    nvs_close(handle);
+
+    // Apply loaded state to GPIOs
+    for (int i = 0; i < RELAY_COUNT; i++) {
+        relay_control_set(i, relay_state[i]);
+    }
 }
