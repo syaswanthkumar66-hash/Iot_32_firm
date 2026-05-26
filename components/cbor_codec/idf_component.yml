@@ -1,2 +1,2 @@
 dependencies:
-  espressif/tinycbor: "^0.6.0"
+  espressif/cbor: ">=0.6.0"
