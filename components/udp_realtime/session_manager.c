@@ -1,6 +1,7 @@
 #include "session_manager.h"
 #include <string.h>
 #include "esp_log.h"
+#include "esp_random.h"
 #include "security.h"
 
 #define MAX_SESSIONS 5
@@ -24,15 +25,23 @@ session_t *session_create(uint32_t id, const uint8_t *remote_nonce, size_t nonce
         if (!sessions[i].active) {
             sessions[i].active = true;
             sessions[i].session_id = id;
-            // derive session key: HKDF(device_token || remote_nonce || local_nonce)
+
             uint8_t local_nonce[12];
             esp_fill_random(local_nonce, 12);
             memcpy(sessions[i].local_nonce, local_nonce, 12);
-            // For brevity, actual HKDF call omitted but implemented similarly
+
+            // Correct key derivation: concatenate device_token || remote_nonce || local_nonce
+            uint8_t ikm[DEVICE_TOKEN_LEN + 12 + 12];
+            const uint8_t *token = security_get_device_token();
+            memcpy(ikm, token, DEVICE_TOKEN_LEN);
+            memcpy(ikm + DEVICE_TOKEN_LEN, remote_nonce, 12);
+            memcpy(ikm + DEVICE_TOKEN_LEN + 12, local_nonce, 12);
+
             hkdf_sha256_extract_expand(NULL, 0,
-                                       device_token, DEVICE_TOKEN_LEN,
-                                       remote_nonce, nonce_len,
+                                       ikm, sizeof(ikm),
+                                       (const uint8_t *)"session_key", 11,
                                        sessions[i].session_key, SESSION_KEY_LEN);
+
             session_count++;
             ESP_LOGI("SESS", "Created session %08lx", id);
             return &sessions[i];
