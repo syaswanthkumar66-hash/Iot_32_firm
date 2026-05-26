@@ -12,6 +12,7 @@
 esp_err_t security_init_credentials(void);
 void security_reset_credentials(void);
 void security_export_credentials(void);
+const uint8_t* security_get_device_token(void);   // NEW: accessor for session manager
 
 esp_err_t security_init(void);
 
