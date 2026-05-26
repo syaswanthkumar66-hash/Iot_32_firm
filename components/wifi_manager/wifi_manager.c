@@ -4,10 +4,11 @@
 #include "esp_wifi.h"
 #include "esp_log.h"
 #include "esp_event.h"
+#include "esp_system.h"
 #include "nvs_flash.h"
 
 static const char *TAG = "WIFI";
-EventGroupHandle_t wifi_event_group;      // made non-static for UDP task
+EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
 
 static void event_handler(void* arg, esp_event_base_t event_base,
@@ -17,15 +18,18 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         esp_wifi_connect();
+        ESP_LOGI(TAG, "retry connect");
         xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
+        ESP_LOGI(TAG, "got ip");
     }
 }
 
 void wifi_manager_start(void)
 {
     wifi_event_group = xEventGroupCreate();
+
     ESP_ERROR_CHECK(esp_netif_create_default_wifi_sta());
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
@@ -52,16 +56,23 @@ void wifi_manager_start(void)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
-    ESP_LOGI(TAG, "WiFi STA started");
+
+    ESP_LOGI(TAG, "WiFi STA started, connecting...");
 }
 
 void wifi_manager_task(void)
 {
     EventBits_t bits = xEventGroupWaitBits(wifi_event_group,
                                            WIFI_CONNECTED_BIT,
-                                           pdFALSE, pdFALSE,
-                                           portMAX_DELAY);
-    if (bits & WIFI_CONNECTED_BIT) {
-        vTaskSuspend(NULL);
+                                           pdFALSE,
+                                           pdFALSE,
+                                           pdMS_TO_TICKS(30000));   // 30 sec timeout
+
+    if (!(bits & WIFI_CONNECTED_BIT)) {
+        ESP_LOGE(TAG, "WiFi connection timeout, restarting...");
+        esp_restart();
     }
+
+    ESP_LOGI(TAG, "Connected. WiFi task suspending.");
+    vTaskSuspend(NULL);
 }
