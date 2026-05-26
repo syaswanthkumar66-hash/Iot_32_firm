@@ -1,8 +1,3 @@
-/**
- * @file wifi_manager.c
- * @brief WiFi connection management
- */
-
 #include "wifi_manager.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
@@ -67,7 +62,6 @@ void wifi_manager_start(void)
 
 void wifi_manager_task(void)
 {
-    // Wait for connection, then just suspend itself
     EventBits_t bits = xEventGroupWaitBits(wifi_event_group,
                                            WIFI_CONNECTED_BIT,
                                            pdFALSE,
