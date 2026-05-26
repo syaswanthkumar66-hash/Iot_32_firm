@@ -1,8 +1,8 @@
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
+#include "security.h" // for SESSION_KEY_LEN, DEVICE_TOKEN_LEN
 
-#define SESSION_KEY_LEN 32
 typedef struct {
     bool active;
     uint32_t session_id;
