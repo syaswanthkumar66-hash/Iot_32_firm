@@ -67,9 +67,8 @@ int packet_process(const uint8_t *data, size_t len, session_t *session,
     }
     memcpy(plain_out, decrypted, payload_len);
 
-    nonce_manager_increment_counter();
+    // NO call to nonce_manager_increment_counter() here – it belongs on TX only
 
-    // Dispatch only if there is at least one byte for the opcode
     if (payload_len >= 1) {
         opcode_dispatch(decrypted[0], decrypted + 1, payload_len - 1);
     }
