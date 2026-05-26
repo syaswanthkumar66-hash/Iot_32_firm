@@ -1,7 +1,3 @@
-
-```c
-// components/mqtt_client/mqtt_handler.c
-#include "mqtt_client.h"
 #include "mqtt_client.h"
 #include "esp_log.h"
 #include "cJSON.h"
@@ -15,7 +11,6 @@ void mqtt_client_init(void) {
 }
 
 void mqtt_client_task(void) {
-    // Connect to broker, subscribe to topics, handle incoming CBOR payloads
     ESP_LOGI(TAG, "MQTT task started (testing mode – TLS1.3)");
     while(1) {
         vTaskDelay(pdMS_TO_TICKS(10000));
